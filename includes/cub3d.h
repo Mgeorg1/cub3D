@@ -61,19 +61,19 @@ typedef struct	s_rgb
 
 typedef struct	s_vec
 {
-	float x;
-	float y;
+	double x;
+	double y;
 }				t_vec;
 
 
 typedef struct	s_plr
 {
-	int		x;
-	int		y;
+	double		x;
+	double		y;
 	t_vec 	dir;
-	float	dir1;
-	float	start;
-	float	end;
+	double	dir1;
+	double	start;
+	double	end;
 	t_vec	plane;
 }				t_plr;
 

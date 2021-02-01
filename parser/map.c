@@ -104,7 +104,7 @@ void	get_start_dir(t_all *all, char c, int x, int y)
 		all->plr.dir.x = 1;
 		all->plr.dir.y = 0;
 		all->plr.plane.x = 0;
-		all->plr.plane.y = -0.66;
+		all->plr.plane.y = 0.66;
 	}
 	if (c == 'W')
 	{

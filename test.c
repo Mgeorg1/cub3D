@@ -1,5 +1,6 @@
 #include "includes/cub3d.h"
 #define SCALE_M 5
+#define MOVE_SPD 0.2
 #include  <stdio.h>
 
 void	my_pixel_put(t_all *all, int x, int y, int color)
@@ -50,8 +51,8 @@ void draw_map(t_all *all, t_point point, int color)
 void	ft_cast_ray(t_all *all)
 {
 	t_plr ray = all->plr;
-	float start;
-	float end;
+	double start;
+	double end;
 
 	start = all->plr.dir1 - 0.5;
 	end = all->plr.dir1 + 0.5;
@@ -100,7 +101,7 @@ void draw_player(t_plr *plr, t_all *all)
 	}
 }
 
-t_vec	new_vec(float x, float y)
+t_vec	new_vec(double x, double y)
 {
 	t_vec res;
 
@@ -127,7 +128,7 @@ t_vec	sub_vec(t_vec a, t_vec b)
 	return (res);
 }
 
-t_vec	scalar_mult(float a, t_vec b)
+t_vec	scalar_mult(double a, t_vec b)
 {
 	t_vec res;
 	
@@ -136,12 +137,12 @@ t_vec	scalar_mult(float a, t_vec b)
 	return (res);
 }
 
-float	dot_product(t_vec a, t_vec b)
+double	dot_product(t_vec a, t_vec b)
 {
 	return (a.x * b.x + a.y * b.y);
 }
 
-float	len_vec(t_vec a)
+double	len_vec(t_vec a)
 {
 	return (sqrt(dot_product(a, a)));
 }
@@ -158,12 +159,12 @@ void	draw_ver_line(int x, int start, int end, int color, t_all *all)
 void	draw_walls(t_all *all)
 {
 	t_vec ray_dir;
-	float x;
-	float camera_x;
+	double x;
+	double camera_x;
 	t_vec side_dist;
 	t_point map_p;
 	t_vec delta_dist;
-	float perp_wall_dist;
+	double perp_wall_dist;
 	t_point step;
 	int hit;
 	int side;
@@ -175,19 +176,19 @@ void	draw_walls(t_all *all)
 	x = 0;
 	while (x < all->win.win_res.width)
 	{
-		camera_x = 2 * x / (float)(all->win.win_res.width) - 1;
+		camera_x = 2 * x / (double)(all->win.win_res.width) - 1;
 		//ray_dir = add_vec(all->plr.dir, scalar_mult(camera_x, all->plr.plane));
 		ray_dir.x = all->plr.dir.x + all->plr.plane.x * camera_x;
 		ray_dir.y = all->plr.dir.y + all->plr.plane.y * camera_x;
 		map_p.y = all->plr.y;
 	 	map_p.x = all->plr.x;
-		delta_dist.x = fabs(1 / (float)ray_dir.x);
-		delta_dist.y = fabs(1 / (float)ray_dir.y);
+		delta_dist.x = fabs(1 / ray_dir.x);
+		delta_dist.y = fabs(1 / ray_dir.y);
 		hit = 0;
 		if (ray_dir.x < 0)
 		{
 			step.x = -1;
-			side_dist.x = ((float)all->plr.x - (float)map_p.x) * delta_dist.x;
+			side_dist.x = (all->plr.x - map_p.x) * delta_dist.x;
 
 		}
 		else
@@ -235,7 +236,7 @@ void	draw_walls(t_all *all)
 		if (draw_end  >= all->win.win_res.height)
 			draw_end = all->win.win_res.height - 1;
 		color = 0x64B5F6;
-		float ratio = 1.0f - 0.2f;
+		double ratio = 1.0f - 0.2f;
 		int r = (int)(color >> 16) * ratio;
 		int g = (int)(color >> 8)  * ratio;
 		int b = (int)(color & 0xFF) * ratio;
@@ -278,50 +279,67 @@ void 	draw_screen(t_all *all)
 
 int press_key(int keycode, t_all *all)
 {
+	t_vec tmp;
 	//ft_putnbr_fd(keycode, 1);
+	//ft_putchar_fd(all->map[(int)(all->plr.y)][(int)(all->plr.x)], 1);
 	if (keycode == 13)
 	{	
-		printf("%c\n", all->map[all->plr.y][all->plr.x]);
-		printf("%c\n", all->map[(int)(all->plr.y + (int)all->plr.dir.y)][(int)all->plr.x]);
-		printf("%c\n", all->map[(int)(all->plr.y)][(int)(all->plr.x + (int)all->plr.dir.x)]);
 		mlx_clear_window(all->win.mlx, all->win.win);
-		if (all->map[(int)(all->plr.y + (int)all->plr.dir.y)][(int)all->plr.x] == '0')
-			all->plr.y += all->plr.dir.y;
-		if (all->map[(int)(all->plr.y)][(int)(all->plr.x + (int)all->plr.dir.x)] == '0')
-			all->plr.x += all->plr.dir.x;
-		printf("pos1: x = %d y = %d\ndir: x = %f y = %f\n", all->plr.x, all->plr.y, all->plr.dir.x, all->plr.dir.y);
+		if (all->map[(int)(all->plr.y + all->plr.dir.y * MOVE_SPD)][(int)all->plr.x] != '1')
+			all->plr.y += all->plr.dir.y * MOVE_SPD;
+		if (all->map[(int)(all->plr.y)][(int)(all->plr.x + all->plr.dir.x * MOVE_SPD)] != '1')
+			all->plr.x += all->plr.dir.x * MOVE_SPD;
 		draw_screen(all);
 	}
 	// 0 - a 2 - d s - 1
 	if (keycode == 0)
 	{
 		mlx_clear_window(all->win.mlx, all->win.win);
-		all->plr.x += sin(all->plr.dir1);
-		all->plr.y -= cos(all->plr.dir1);
+		if (all->map[(int)(all->plr.y - all->plr.dir.x * MOVE_SPD)][(int)all->plr.x] != '1')
+			all->plr.y -= all->plr.dir.x * MOVE_SPD;
+		if (all->map[(int)(all->plr.y)][(int)(all->plr.x + all->plr.dir.y * MOVE_SPD)] != '1')
+			all->plr.x += all->plr.dir.y * MOVE_SPD;
 		draw_screen(all);
 	}
 	if (keycode == 2)
 	{
 		mlx_clear_window(all->win.mlx, all->win.win);
-		all->plr.x -= sin(all->plr.dir1);
-		all->plr.y += cos(all->plr.dir1);
+		if (all->map[(int)(all->plr.y + all->plr.dir.x * MOVE_SPD)][(int)all->plr.x] != '1')
+			all->plr.y += all->plr.dir.x * MOVE_SPD;
+		if (all->map[(int)(all->plr.y)][(int)(all->plr.x - all->plr.dir.y * MOVE_SPD)] != '1')
+			all->plr.x-= all->plr.dir.y * MOVE_SPD;
+		//printf("pos1: x = %d y = %d\ndir: x = %f y = %f\n", all->plr.x, all->plr.y, all->plr.dir.x, all->plr.dir.y);
 		draw_screen(all);
 	}
 	if (keycode == 1)
 	{
 		mlx_clear_window(all->win.mlx, all->win.win);
-		all->plr.y -= sin(all->plr.dir1);
-		all->plr.x -= cos(all->plr.dir1);
+		if (all->map[(int)(all->plr.y - all->plr.dir.y * MOVE_SPD)][(int)all->plr.x] != '1')
+			all->plr.y -= all->plr.dir.y * MOVE_SPD;
+		if (all->map[(int)(all->plr.y)][(int)(all->plr.x - all->plr.dir.x * MOVE_SPD)] != '1')
+			all->plr.x -= all->plr.dir.x * MOVE_SPD;
 		draw_screen(all);
 	}
 	if (keycode == 123)
 	{
-		all->plr.dir1 -= 0.1;
+		mlx_clear_window(all->win.mlx, all->win.win);
+		tmp = all->plr.dir;
+		all->plr.dir.x = all->plr.dir.x * cos (-0.1) - all->plr.dir.y * sin(-0.1);
+		all->plr.dir.y = tmp.x * sin (-0.1) + all->plr.dir.y * cos(-0.1);
+		tmp = all->plr.plane;
+		all->plr.plane.x = tmp.x * cos (-0.1) - tmp.y * sin(-0.1);
+		all->plr.plane.y = tmp.x * sin(-0.1) + tmp.y * cos(-0.1);
 		draw_screen(all);
 	}
 	if (keycode == 124)
 	{
-		all->plr.dir1 += 0.1;
+		mlx_clear_window(all->win.mlx, all->win.win);
+		tmp = all->plr.dir;
+		all->plr.dir.x = all->plr.dir.x * cos (0.1) - all->plr.dir.y * sin(0.1);
+		all->plr.dir.y = tmp.x * sin (0.1) + all->plr.dir.y * cos(0.1);
+		tmp = all->plr.plane;
+		all->plr.plane.x = tmp.x * cos (0.1) - tmp.y * sin(0.1);
+		all->plr.plane.y = tmp.x * sin(0.1) + tmp.y * cos(0.1);
 		draw_screen(all);
 	} //up - 126 down - 125 left - 123 right - 124
 	return (0);
@@ -359,7 +377,7 @@ int main(int argc, char *argv[])
 	if (parser(fd, line, &map, &all) < 0)
 		error("SOMTHING WRONG WITH .cub FILE!\n");
 	all.win.win = mlx_new_window(all.win.mlx, all.win.win_res.width, all.win.win_res.height, "Hello world!");
-	printf("%c\n", all.map[all.plr.y][all.plr.x]);
+//rintf("%c\n", all.map[all.plr.y][all.plr.x]);
 	draw_screen(&all);
 	mlx_hook(all.win.win, 2, (1L << 0), &press_key, &all);
 	mlx_hook(all.win.win, 17 , 0, &exit_m, &all);
