@@ -17,7 +17,7 @@
 # include <stdlib.h>
 # include "../libft/libft.h"
 #ifndef BUFFER_SIZE
-# define BUFFER_SIZE 10000 
+# define BUFFER_SIZE 10000
 #endif
 //int		ft_strlen(const char *s);
 char	*my_strjoin(char *s1, char *s2);

@@ -1,6 +1,6 @@
 #include "includes/cub3d.h"
 #define SCALE_M 5
-#define MOVE_SPD 0.2
+#define MOVE_SPD 0.1
 #include  <stdio.h>
 
 void	my_pixel_put(t_all *all, int x, int y, int color)
@@ -119,33 +119,6 @@ t_vec	add_vec(t_vec a, t_vec b)
 	return (res);
 }
 
-t_vec	sub_vec(t_vec a, t_vec b)
-{
-	t_vec res;
-
-	res.x = a.x - b.x;
-	res.y = a.x - b.y;
-	return (res);
-}
-
-t_vec	scalar_mult(double a, t_vec b)
-{
-	t_vec res;
-	
-	res.x = a * b.x;
-	res.y = a * b.y;
-	return (res);
-}
-
-double	dot_product(t_vec a, t_vec b)
-{
-	return (a.x * b.x + a.y * b.y);
-}
-
-double	len_vec(t_vec a)
-{
-	return (sqrt(dot_product(a, a)));
-}
 
 void	draw_ver_line(int x, int start, int end, int color, t_all *all)
 {
@@ -156,199 +129,235 @@ void	draw_ver_line(int x, int start, int end, int color, t_all *all)
 	}
 }
 
+void	ray_init(t_all *all, t_ray *ray)
+{
+	ray->camera_x = 2 * ray->x / (double)(all->win.win_res.width) - 1;
+	//ray_dir = add_vec(all->plr.dir, scalar_mult(camera_x, all->plr.plane));
+	ray->ray_dir.x = all->plr.dir.x + all->plr.plane.x * ray->camera_x;
+	ray->ray_dir.y = all->plr.dir.y + all->plr.plane.y * ray->camera_x;
+	ray->map_p.y = all->plr.y;
+	ray->map_p.x = all->plr.x;
+	ray->delta_dist.x = fabs(1 / ray->ray_dir.x);
+	ray->delta_dist.y = fabs(1 / ray->ray_dir.y);
+	ray->hit = 0;
+}
+
+void	cell_intersects_calc(t_all *all, t_ray *ray)
+{
+	if (ray->ray_dir.x < 0)
+	{
+		ray->step.x = -1;
+		ray->side_dist.x = (all->plr.x - ray->map_p.x) * ray->delta_dist.x;
+	}
+	else
+	{
+		ray->step.x = 1;
+		ray->side_dist.x = (ray->map_p.x + 1.0 - all->plr.x) * ray->delta_dist.x;
+	}
+	if (ray->ray_dir.y < 0)
+	{
+		ray->step.y = -1;
+		ray->side_dist.y = (all->plr.y - ray->map_p.y) * ray->delta_dist.y;
+	}
+	else
+	{
+		ray->step.y = 1;
+		ray->side_dist.y = (ray->map_p.y + 1.0 - all->plr.y) * ray->delta_dist.y;
+	}
+}
+
+
+void	dda(t_all *all, t_ray *ray)
+{
+	cell_intersects_calc(all, ray);
+	while (ray->hit == 0)
+	{
+		if (ray->side_dist.x < ray->side_dist.y)
+		{
+			ray->side_dist.x += ray->delta_dist.x;
+			ray->map_p.x += ray->step.x;
+			ray->side = 0;
+		}
+		else
+		{
+			ray->side_dist.y += ray->delta_dist.y;
+			ray->map_p.y += ray->step.y;
+			ray->side = 1;
+		}
+		if (all->map[ray->map_p.y][ray->map_p.x] == '1')
+			ray->hit = 1;
+	}
+	if (ray->side == 0)
+		ray->perp_wall_dist = (ray->map_p.x - all->plr.x + (1 - ray->step.x) / 2) / ray->ray_dir.x;
+	else
+		ray->perp_wall_dist = (ray->map_p.y - all->plr.y + (1 - ray->step.y) / 2) / ray->ray_dir.y;
+}
+
 void	draw_walls(t_all *all)
 {
-	t_vec ray_dir;
-	double x;
-	double camera_x;
-	t_vec side_dist;
-	t_point map_p;
-	t_vec delta_dist;
-	double perp_wall_dist;
-	t_point step;
-	int hit;
-	int side;
-	int l_height;
-	int draw_start;
-	int draw_end;
-	int color = 0xFFFF00;
+	t_ray	ray;
 
-	x = 0;
-	while (x < all->win.win_res.width)
+	ray.x = 0;
+	while (ray.x < all->win.win_res.width)
 	{
-		camera_x = 2 * x / (double)(all->win.win_res.width) - 1;
-		//ray_dir = add_vec(all->plr.dir, scalar_mult(camera_x, all->plr.plane));
-		ray_dir.x = all->plr.dir.x + all->plr.plane.x * camera_x;
-		ray_dir.y = all->plr.dir.y + all->plr.plane.y * camera_x;
-		map_p.y = all->plr.y;
-	 	map_p.x = all->plr.x;
-		delta_dist.x = fabs(1 / ray_dir.x);
-		delta_dist.y = fabs(1 / ray_dir.y);
-		hit = 0;
-		if (ray_dir.x < 0)
-		{
-			step.x = -1;
-			side_dist.x = (all->plr.x - map_p.x) * delta_dist.x;
-
-		}
-		else
-		{
-			step.x = 1;
-			side_dist.x = (map_p.x + 1.0 - all->plr.x) * delta_dist.x;
-		}
-		if (ray_dir.y < 0)
-		{
-			step.y = -1;
-			side_dist.y = (all->plr.y - map_p.y) * delta_dist.y;
-		}
-		else
-		{
-			step.y = 1;
-			side_dist.y = (map_p.y + 1.0 - all->plr.y) * delta_dist.y;
-		}
-		while (hit == 0)
-		{
-			if (side_dist.x < side_dist.y)
-			{
-				side_dist.x += delta_dist.x;
-				map_p.x += step.x;
-				side = 0;
-			}
-			else
-			{
-				side_dist.y += delta_dist.y;
-				map_p.y += step.y;
-				side = 1;
-			}
-			if (all->map[map_p.y][map_p.x] == '1')
-				hit = 1;
-		}
-		if (side == 0)
-			perp_wall_dist = (map_p.x - all->plr.x + (1 - step.x) / 2) / ray_dir.x;
-		else
-			perp_wall_dist = (map_p.y - all->plr.y + (1 - step.y) / 2) / ray_dir.y;
-		
-		l_height = (int) (all->win.win_res.height / perp_wall_dist);
-		draw_start = -1 * l_height / 2 + all->win.win_res.height / 2;
-		if (draw_start < 0)
-			draw_start = 0;
-		draw_end = l_height / 2 + all->win.win_res.height / 2;
-		if (draw_end  >= all->win.win_res.height)
-			draw_end = all->win.win_res.height - 1;
-		color = 0x64B5F6;
+		ray_init(all, &ray);
+		dda(all, &ray);
+		ray.l_height = (int) (all->win.win_res.height / ray.perp_wall_dist);
+		ray.draw_start = -1 * ray.l_height / 2 + all->win.win_res.height / 2;
+		if (ray.draw_start < 0)
+			ray.draw_start = 0;
+		ray.draw_end = ray.l_height / 2 + all->win.win_res.height / 2;
+		if (ray.draw_end  >= all->win.win_res.height)
+			ray.draw_end = all->win.win_res.height - 1;
+		ray.color = 0x64B5F6;
 		double ratio = 1.0f - 0.2f;
-		int r = (int)(color >> 16) * ratio;
-		int g = (int)(color >> 8)  * ratio;
-		int b = (int)(color & 0xFF) * ratio;
-		if (side == 1)
-		 	color = r << 16 | g << 8 | b; 
-		draw_ver_line(x, draw_start, draw_end, color, all);
-		x++;
+		int r = (int)(ray.color >> 16) * ratio;
+		int g = (int)(ray.color >> 8)  * ratio;
+		int b = (int)(ray.color & 0xFF) * ratio;
+		if (ray.side == 1)
+		 	ray.color = r << 16 | g << 8 | b; 
+		draw_ver_line(ray.x, ray.draw_start, ray.draw_end, ray.color, all);
+		ray.x++;
 	}
 }
-void 	draw_screen(t_all *all)
+
+void	key_init(t_all *all)
 {
-	int x;
-	int y;
-	t_point point;
-
-	y = 0;
-	all->win.img = mlx_new_image(all->win.mlx, all->win.win_res.width, all->win.win_res.height);
-	all->win.addr = mlx_get_data_addr(all->win.img, &all->win.bpp, &all->win.line_l, &all->win.en);
-	// while(all->map[y])
-	// {
-	// 	x = 0;
-	// 	while (all->map[y][x])
-	// 	{
-	// 		if (all->map[y][x] == '1')
-	// 		{
-	// 			point.x = x;
-	// 			point.y = y;
-	// 			draw_map(all, point, 0xFF0000);
-	// 		}
-	// 		x++;
-	// 	}
-	// 	y++;
-	// }
-	// draw_player(&all->plr, all);
-	draw_walls(all);
-	mlx_put_image_to_window(all->win.mlx, all->win.win, all->win.img, 0, 0);
-	mlx_destroy_image(all->win.mlx, all->win.img);
-
+	all->keys.w = 0;
+	all->keys.a = 0;
+	all->keys.s = 0;
+	all->keys.d = 0;
+	all->keys.left_arrow = 0;
+	all->keys.right_arrow = 0;
 }
 
-int press_key(int keycode, t_all *all)
+void	key_w(t_all *all)
+{
+	if (all->map[(int)(all->plr.y + all->plr.dir.y * MOVE_SPD)][(int)all->plr.x] != '1')
+		all->plr.y += all->plr.dir.y * MOVE_SPD;
+	if (all->map[(int)(all->plr.y)][(int)(all->plr.x + all->plr.dir.x * MOVE_SPD)] != '1')
+		all->plr.x += all->plr.dir.x * MOVE_SPD;
+}
+
+void	key_a(t_all *all)
+{
+	if (all->map[(int)(all->plr.y - all->plr.dir.x * MOVE_SPD)][(int)all->plr.x] != '1')
+		all->plr.y -= all->plr.dir.x * MOVE_SPD;
+	if (all->map[(int)(all->plr.y)][(int)(all->plr.x + all->plr.dir.y * MOVE_SPD)] != '1')
+		all->plr.x += all->plr.dir.y * MOVE_SPD;
+}
+
+void	key_s(t_all *all)
+{
+	if (all->map[(int)(all->plr.y - all->plr.dir.y * MOVE_SPD)][(int)all->plr.x] != '1')
+		all->plr.y -= all->plr.dir.y * MOVE_SPD;
+	if (all->map[(int)(all->plr.y)][(int)(all->plr.x - all->plr.dir.x * MOVE_SPD)] != '1')
+		all->plr.x -= all->plr.dir.x * MOVE_SPD;
+}
+
+void	key_d(t_all *all)
+{
+	if (all->map[(int)(all->plr.y + all->plr.dir.x * MOVE_SPD)][(int)all->plr.x] != '1')
+		all->plr.y += all->plr.dir.x * MOVE_SPD;
+	if (all->map[(int)(all->plr.y)][(int)(all->plr.x - all->plr.dir.y * MOVE_SPD)] != '1')
+		all->plr.x -= all->plr.dir.y * MOVE_SPD;
+}
+
+void	key_left(t_all *all)
 {
 	t_vec tmp;
+
+	tmp = all->plr.dir;
+	all->plr.dir.x = all->plr.dir.x * cos(-0.1) - all->plr.dir.y * sin(-0.1);
+	all->plr.dir.y = tmp.x * sin(-0.1) + all->plr.dir.y * cos(-0.1);
+	tmp = all->plr.plane;
+	all->plr.plane.x = tmp.x * cos(-0.1) - tmp.y * sin(-0.1);
+	all->plr.plane.y = tmp.x * sin(-0.1) + tmp.y * cos(-0.1);
+}
+
+void	key_right(t_all *all)
+{
+	t_vec	tmp;
+
+	tmp = all->plr.dir;
+	all->plr.dir.x = all->plr.dir.x * cos(0.1) - all->plr.dir.y * sin(0.1);
+	all->plr.dir.y = tmp.x * sin(0.1) + all->plr.dir.y * cos(0.1);
+	tmp = all->plr.plane;
+	all->plr.plane.x = tmp.x * cos(0.1) - tmp.y * sin(0.1);
+	all->plr.plane.y = tmp.x * sin(0.1) + tmp.y * cos(0.1);
+}
+
+void	check_key_flags(t_all *all)
+{
+	if (all->keys.w == 1)
+		key_w(all);
+	if (all->keys.a == 1)
+		key_a(all);
+	if (all->keys.s == 1)
+		key_s(all);
+	if (all->keys.d == 1)
+		key_d(all);
+	if (all->keys.left_arrow == 1)
+		key_left(all);
+	if (all->keys.right_arrow == 1)
+		key_right(all);
+}
+
+int		press_key(int keycode, t_all *all)
+{
 	//ft_putnbr_fd(keycode, 1);
-	//ft_putchar_fd(all->map[(int)(all->plr.y)][(int)(all->plr.x)], 1);
 	if (keycode == 13)
-	{	
-		mlx_clear_window(all->win.mlx, all->win.win);
-		if (all->map[(int)(all->plr.y + all->plr.dir.y * MOVE_SPD)][(int)all->plr.x] != '1')
-			all->plr.y += all->plr.dir.y * MOVE_SPD;
-		if (all->map[(int)(all->plr.y)][(int)(all->plr.x + all->plr.dir.x * MOVE_SPD)] != '1')
-			all->plr.x += all->plr.dir.x * MOVE_SPD;
-		draw_screen(all);
-	}
-	// 0 - a 2 - d s - 1
+		all->keys.w = 1;
 	if (keycode == 0)
-	{
-		mlx_clear_window(all->win.mlx, all->win.win);
-		if (all->map[(int)(all->plr.y - all->plr.dir.x * MOVE_SPD)][(int)all->plr.x] != '1')
-			all->plr.y -= all->plr.dir.x * MOVE_SPD;
-		if (all->map[(int)(all->plr.y)][(int)(all->plr.x + all->plr.dir.y * MOVE_SPD)] != '1')
-			all->plr.x += all->plr.dir.y * MOVE_SPD;
-		draw_screen(all);
-	}
+		all->keys.a = 1;
 	if (keycode == 2)
-	{
-		mlx_clear_window(all->win.mlx, all->win.win);
-		if (all->map[(int)(all->plr.y + all->plr.dir.x * MOVE_SPD)][(int)all->plr.x] != '1')
-			all->plr.y += all->plr.dir.x * MOVE_SPD;
-		if (all->map[(int)(all->plr.y)][(int)(all->plr.x - all->plr.dir.y * MOVE_SPD)] != '1')
-			all->plr.x-= all->plr.dir.y * MOVE_SPD;
-		//printf("pos1: x = %d y = %d\ndir: x = %f y = %f\n", all->plr.x, all->plr.y, all->plr.dir.x, all->plr.dir.y);
-		draw_screen(all);
-	}
+		all->keys.d = 1;
 	if (keycode == 1)
-	{
-		mlx_clear_window(all->win.mlx, all->win.win);
-		if (all->map[(int)(all->plr.y - all->plr.dir.y * MOVE_SPD)][(int)all->plr.x] != '1')
-			all->plr.y -= all->plr.dir.y * MOVE_SPD;
-		if (all->map[(int)(all->plr.y)][(int)(all->plr.x - all->plr.dir.x * MOVE_SPD)] != '1')
-			all->plr.x -= all->plr.dir.x * MOVE_SPD;
-		draw_screen(all);
-	}
+		all->keys.s = 1;
 	if (keycode == 123)
-	{
-		mlx_clear_window(all->win.mlx, all->win.win);
-		tmp = all->plr.dir;
-		all->plr.dir.x = all->plr.dir.x * cos (-0.1) - all->plr.dir.y * sin(-0.1);
-		all->plr.dir.y = tmp.x * sin (-0.1) + all->plr.dir.y * cos(-0.1);
-		tmp = all->plr.plane;
-		all->plr.plane.x = tmp.x * cos (-0.1) - tmp.y * sin(-0.1);
-		all->plr.plane.y = tmp.x * sin(-0.1) + tmp.y * cos(-0.1);
-		draw_screen(all);
-	}
+		all->keys.left_arrow = 1;
 	if (keycode == 124)
-	{
-		mlx_clear_window(all->win.mlx, all->win.win);
-		tmp = all->plr.dir;
-		all->plr.dir.x = all->plr.dir.x * cos (0.1) - all->plr.dir.y * sin(0.1);
-		all->plr.dir.y = tmp.x * sin (0.1) + all->plr.dir.y * cos(0.1);
-		tmp = all->plr.plane;
-		all->plr.plane.x = tmp.x * cos (0.1) - tmp.y * sin(0.1);
-		all->plr.plane.y = tmp.x * sin(0.1) + tmp.y * cos(0.1);
-		draw_screen(all);
-	} //up - 126 down - 125 left - 123 right - 124
+		all->keys.right_arrow = 1;
+	 //up - 126 down - 125 left - 123 right - 124
 	return (0);
 }
 
+int		release_key(int keycode, t_all *all)
+{
+	if (keycode == 13)
+		all->keys.w = 0;
+	if (keycode == 0)
+		all->keys.a = 0;
+	if (keycode == 2)
+		all->keys.d = 0;
+	if (keycode == 1)
+		all->keys.s = 0;
+	if (keycode == 123)
+		all->keys.left_arrow = 0;
+	if (keycode == 124)
+		all->keys.right_arrow = 0;
+	return (0);
+}
 
 int exit_m(int keycode)
 {
 	exit(0);
+}
+int 	draw_screen(t_all *all)
+{
+	//int x;
+	//int y;
+	t_point point;
+
+	//y = 0;
+	mlx_clear_window(all->win.mlx, all->win.win);
+	check_key_flags(all);
+	all->win.img = mlx_new_image(all->win.mlx, all->win.win_res.width, all->win.win_res.height);
+	all->win.addr = mlx_get_data_addr(all->win.img, &all->win.bpp, &all->win.line_l, &all->win.en);
+	draw_walls(all);
+	mlx_put_image_to_window(all->win.mlx, all->win.win, all->win.img, 0, 0);
+	mlx_destroy_image(all->win.mlx, all->win.img);
+	return (0);
 }
 
 int main(int argc, char *argv[])
@@ -368,8 +377,8 @@ int main(int argc, char *argv[])
 	
 	all.plr.dir1 = M_PI_2 * 3;
 	all.win.mlx = mlx_init();
-	all.win.scr_res.height = 1080;
-	all.win.scr_res.width = 1920;
+	all.win.scr_res.height = 2304;
+	all.win.scr_res.width = 4096;
 	if (argc < 2 && argc > 3)
 		error("WRONG NUMBER OF ARGUMENTS!\n");
 	if ((fd = open(argv[1], O_RDONLY)) < 0)
@@ -378,9 +387,12 @@ int main(int argc, char *argv[])
 		error("SOMTHING WRONG WITH .cub FILE!\n");
 	all.win.win = mlx_new_window(all.win.mlx, all.win.win_res.width, all.win.win_res.height, "Hello world!");
 //rintf("%c\n", all.map[all.plr.y][all.plr.x]);
+	key_init(&all);
 	draw_screen(&all);
-	mlx_hook(all.win.win, 2, (1L << 0), &press_key, &all);
+	mlx_hook(all.win.win, 2, 0, &press_key, &all);
+	mlx_hook(all.win.win, 3, 0, &release_key, &all);
 	mlx_hook(all.win.win, 17 , 0, &exit_m, &all);
+	mlx_loop_hook(all.win.mlx, draw_screen, &all);
 	mlx_loop(all.win.mlx);
-	while(1);
+	
 }

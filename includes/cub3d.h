@@ -77,6 +77,33 @@ typedef struct	s_plr
 	t_vec	plane;
 }				t_plr;
 
+typedef struct	s_ray
+{
+	t_vec		ray_dir;
+	double		x;
+	double		camera_x;
+	t_vec		side_dist;
+	t_point		map_p;
+	t_vec		delta_dist;
+	double		perp_wall_dist;
+	t_point		step;
+	int			hit;
+	int			side;
+	int			l_height;
+	int			draw_start;
+	int			draw_end;
+	int			color;
+}				t_ray;
+
+typedef struct	s_key_flags
+{
+	int			w;
+	int 		a;
+	int			s;
+	int			d;
+	int			left_arrow;
+	int			right_arrow;
+}				t_key_flags;
 
 typedef struct	s_all
 {
@@ -92,6 +119,7 @@ typedef struct	s_all
 	int			f_flag;
 	int			dir_flag;
 	t_textures textures;
+	t_key_flags keys;
 }				t_all;
 
 // typedef struct	s_map_info
