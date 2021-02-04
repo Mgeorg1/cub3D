@@ -95,6 +95,18 @@ typedef struct	s_ray
 	int			color;
 }				t_ray;
 
+typedef struct	s_caf_cast
+{
+	t_vec		ray_dir0;
+	t_vec		ray_dir1;
+	double		pos_z;
+	int			p;
+	double		row_dist;
+	t_vec		point;
+	t_point		cell;
+	t_vec		step;
+}				t_caf_cast;
+
 typedef struct	s_key_flags
 {
 	int			w;

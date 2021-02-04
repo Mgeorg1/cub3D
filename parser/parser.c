@@ -80,11 +80,11 @@ int		parse_color(char **words, t_all *all)
 {
 	if (matrix_len(words) != 2)
 		error("WRONG COLOR!\n");
-	if (!ft_strncmp(words[0], "F", 1) && all->f_flag == 0
+	if (!ft_strncmp(words[0], "F", 2) && all->f_flag == 0
 	&& (all->c_floor = atorgb(words[1], &all->floor)) >= 0)
 		all->f_flag = 1;
-	else if (!ft_strncmp(words[0], "C", 1) && all->c_flag == 0
-	&& (all->c_celling = atorgb(words[1], &all->celling) >= 0))
+	else if (!ft_strncmp(words[0], "C", 2) && all->c_flag == 0
+	&& (all->c_celling = atorgb(words[1], &all->celling)) >= 0)
 		all->c_flag = 1;
 	else
 		error("WRONG COLOR!\n");

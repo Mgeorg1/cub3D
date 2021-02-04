@@ -209,7 +209,7 @@ void	draw_walls(t_all *all)
 		ray.draw_end = ray.l_height / 2 + all->win.win_res.height / 2;
 		if (ray.draw_end  >= all->win.win_res.height)
 			ray.draw_end = all->win.win_res.height - 1;
-		ray.color = 0x64B5F6;
+		ray.color = 0xDCDCDC;
 		double ratio = 1.0f - 0.2f;
 		int r = (int)(ray.color >> 16) * ratio;
 		int g = (int)(ray.color >> 8)  * ratio;
@@ -339,6 +339,39 @@ int		release_key(int keycode, t_all *all)
 	return (0);
 }
 
+void	draw_floor(t_all *all)
+{
+	t_caf_cast	floor;
+	int			x;
+	int			y;
+
+	x = 0;
+	y = 0;
+	while (y < all->win.win_res.height)
+	{
+		floor.ray_dir0.x = all->plr.dir.x - all->plr.plane.x;
+		floor.ray_dir0.y = all->plr.dir.y - all->plr.plane.y;
+		floor.ray_dir1.x = all->plr.dir.x + all->plr.plane.x;
+		floor.ray_dir1.y = all->plr.dir.y + all->plr.plane.y;
+		floor.p = y - all->win.win_res.height * 0.5;
+		floor. pos_z = all->win.win_res.height * 0.5;
+		floor.row_dist = floor.pos_z / floor.p;
+		floor.step.x = floor.row_dist * (floor.ray_dir1.x - floor.ray_dir0.x) / all->win.win_res.width;
+		floor.step.y = floor.row_dist * (floor.ray_dir1.y - floor.ray_dir0.y) / all->win.win_res.width;
+		floor.point.x = all->plr.x + floor.row_dist * floor.ray_dir0.x;
+		floor.point.y = all->plr.y + floor.row_dist * floor.ray_dir0.y;
+		while (x < all->win.win_res.width)
+		{
+			floor.point.x += floor.step.x;
+			my_pixel_put(all, x, y, all->c_floor);
+			my_pixel_put(all, x, all->win.win_res.height - y - 1, all->c_celling);
+			x++;
+		}
+		y++;
+		x = 0;
+	}
+}
+
 int exit_m(int keycode)
 {
 	exit(0);
@@ -354,6 +387,7 @@ int 	draw_screen(t_all *all)
 	check_key_flags(all);
 	all->win.img = mlx_new_image(all->win.mlx, all->win.win_res.width, all->win.win_res.height);
 	all->win.addr = mlx_get_data_addr(all->win.img, &all->win.bpp, &all->win.line_l, &all->win.en);
+	draw_floor(all);
 	draw_walls(all);
 	mlx_put_image_to_window(all->win.mlx, all->win.win, all->win.img, 0, 0);
 	mlx_destroy_image(all->win.mlx, all->win.img);
@@ -388,6 +422,7 @@ int main(int argc, char *argv[])
 	all.win.win = mlx_new_window(all.win.mlx, all.win.win_res.width, all.win.win_res.height, "Hello world!");
 //rintf("%c\n", all.map[all.plr.y][all.plr.x]);
 	key_init(&all);
+	printf("f %i c %i\n", all.c_floor, all.c_celling);
 	draw_screen(&all);
 	mlx_hook(all.win.win, 2, 0, &press_key, &all);
 	mlx_hook(all.win.win, 3, 0, &release_key, &all);
