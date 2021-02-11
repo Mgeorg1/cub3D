@@ -96,8 +96,8 @@ void	line_validator(t_all *all, int x, int y)
 
 void	get_start_dir(t_all *all, char c, int x, int y)
 {
-	all->plr.x = x;
-	all->plr.y = y;
+	all->plr.x = x + 0.5;
+	all->plr.y = y + 0.5;
 	all->dir_flag++;
 	if (c == 'E')
 	{

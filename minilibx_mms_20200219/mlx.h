@@ -35,9 +35,9 @@
 */
 
 
-#ifndef MLX_H
+#ifndef MLX1_H
 
-#define	MLX_H
+#define	MLX1_H
 
 
 void	*mlx_init();

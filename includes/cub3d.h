@@ -15,13 +15,25 @@
 # include "../libft/libft.h"
 # include "../get_next_line/get_next_line.h"
 # include "../minilibx_opengl_20191021/mlx.h"
-#include <math.h>
+//# include "../minilibx_mms_20200219/mlx.h"
+# include <math.h>
 
 typedef	struct	s_res
 {
 	int			width;
 	int			height;
 }				t_res;
+
+typedef struct	s_tex_img
+{
+	void		*img;
+	void		*addr;
+	int			bpp;
+	int			en;
+	int			line;
+	int			h;
+	int			w;
+} 				t_tex_img;
 
 typedef struct	s_textures
 {
@@ -30,6 +42,10 @@ typedef struct	s_textures
 	char*		fd_w;
 	char*		fd_e;
 	char*		fd_sprite;
+	t_tex_img	img_n;
+	t_tex_img	img_s;
+	t_tex_img	img_e;
+	t_tex_img	img_w;
 }				t_textures;
 
 typedef struct	s_win
@@ -93,7 +109,15 @@ typedef struct	s_ray
 	int			draw_start;
 	int			draw_end;
 	int			color;
+	int			tex_num;
+	double		wall_x;
+	int			tex_x;
+	int			tex_y;
+	double		tex_pos;
+	double 		step_tex;
 }				t_ray;
+
+
 
 typedef struct	s_caf_cast
 {
