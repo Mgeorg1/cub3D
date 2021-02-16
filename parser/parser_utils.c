@@ -62,7 +62,6 @@ int		atorgb(char *s, t_rgb *color)
 int		words_free(char **words, int ret)
 {
 	int i;
-	int n;
 
 	i = 0;
 	while (words[i])

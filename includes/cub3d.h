@@ -46,6 +46,7 @@ typedef struct	s_textures
 	t_tex_img	img_s;
 	t_tex_img	img_e;
 	t_tex_img	img_w;
+	t_tex_img	img_sp;
 }				t_textures;
 
 typedef struct	s_win
@@ -87,16 +88,13 @@ typedef struct	s_plr
 	double		x;
 	double		y;
 	t_vec 	dir;
-	double	dir1;
-	double	start;
-	double	end;
 	t_vec	plane;
 }				t_plr;
 
 typedef struct	s_ray
 {
 	t_vec		ray_dir;
-	double		x;
+	int			x;
 	double		camera_x;
 	t_vec		side_dist;
 	t_point		map_p;
@@ -117,7 +115,21 @@ typedef struct	s_ray
 	double 		step_tex;
 }				t_ray;
 
-
+typedef struct	s_sp_cast
+{
+	t_vec	spr_pl;
+	double	inv_det;
+	t_vec	transf;
+	int		sp_h;
+	int		sp_screen_x;
+	int		draw_start_x;
+	int		draw_start_y;
+	int		draw_end_x;
+	int		draw_end_y;
+	int		sp_w;
+	t_point tex;
+	int		color;
+}				t_sp_cast;
 
 typedef struct	s_caf_cast
 {
@@ -141,8 +153,17 @@ typedef struct	s_key_flags
 	int			right_arrow;
 }				t_key_flags;
 
+typedef	struct	s_spr
+{
+	t_vec		pos;
+	double		dist;
+}				t_spr;
+
+
 typedef struct	s_all
 {
+	char		*line;
+	t_list		*map_lst;
 	t_win		win;
 	t_plr		plr;
 	char 		**map;
@@ -154,8 +175,13 @@ typedef struct	s_all
 	int			c_flag;
 	int			f_flag;
 	int			dir_flag;
-	t_textures textures;
+	t_textures	textures;
 	t_key_flags keys;
+	t_spr		*spr;
+	int			sp_num;
+	t_spr		*spr_vis;
+	double		*z_buf;
+	int			sp_num_v;
 }				t_all;
 
 // typedef struct	s_map_info
@@ -169,15 +195,16 @@ typedef struct	s_all
 // }				t_map_info;
 
 
-void			error(char *s);
+void			error(char *s, t_all *all);
 int				check_flags(t_all *all);
 int 			words_free(char **words, int ret);
 int				is_digit_str(char *word);
-int				parser(int fd, char *line, t_list **map, t_all *all);
-int				make_map(t_all *all, t_list *map);
+int				parser(int fd, t_all *all);
+int				make_map(t_all *all);
 int				atorgb(char *s, t_rgb *color);
 int				matrix_len(char **m);
 int				rgb_to_int(t_rgb *rgb);
+void			free_all(t_all *all);
 
 #endif
 

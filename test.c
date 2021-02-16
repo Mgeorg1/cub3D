@@ -1,6 +1,7 @@
 #include "includes/cub3d.h"
 #define SCALE_M 5
 #define MOVE_SPD 0.07
+#define VIEW_DIST 5000.0
 #include  <stdio.h>
 
 void	my_pixel_put(t_all *all, int x, int y, int color)
@@ -12,19 +13,20 @@ void	my_pixel_put(t_all *all, int x, int y, int color)
 }
 
 
-void	init_textures(t_textures *t, void *mlx)
+void	init_textures(t_textures *t, void *mlx, t_all *all)
 {
 		t->img_n.img = mlx_xpm_file_to_image(mlx, t->fd_n, &t->img_n.w, &t->img_n.h);
 		t->img_s.img = mlx_xpm_file_to_image(mlx, t->fd_s, &t->img_s.w, &t->img_s.h);
 		t->img_e.img = mlx_xpm_file_to_image(mlx, t->fd_e, &t->img_e.w, &t->img_e.h);
 		t->img_w.img = mlx_xpm_file_to_image(mlx, t->fd_w, &t->img_w.w, &t->img_w.h);
-		if (!t->img_n.img || !t->img_s.img || !t->img_e.img || !t->img_w.img)
-			error("WRONG TEXTURES PATH!\n");
+		t->img_sp.img = mlx_xpm_file_to_image(mlx, t->fd_sprite, &t->img_sp.w, &t->img_sp.h);
+		if (!t->img_n.img || !t->img_s.img || !t->img_e.img || !t->img_w.img || !t->img_sp.img)
+			error("WRONG TEXTURES PATH!\n", all);
 		t->img_n.addr = mlx_get_data_addr(t->img_n.img, &t->img_n.bpp, &t->img_n.line, &t->img_n.en);
 		t->img_s.addr = mlx_get_data_addr(t->img_s.img, &t->img_s.bpp, &t->img_s.line, &t->img_s.en);
 		t->img_e.addr = mlx_get_data_addr(t->img_e.img, &t->img_e.bpp, &t->img_e.line, &t->img_e.en);
 		t->img_w.addr = mlx_get_data_addr(t->img_w.img, &t->img_w.bpp, &t->img_w.line, &t->img_w.en);
-		printf("\n%d %d %d %d", t->img_n.bpp, t->img_s.bpp, t->img_w.bpp, t->img_e.bpp);
+		t->img_sp.addr = mlx_get_data_addr(t->img_sp.img, &t->img_sp.bpp, &t->img_sp.line, &t->img_sp.en);
 }
 
 int		get_color(t_tex_img *img, int x, int y)
@@ -238,6 +240,148 @@ t_tex_img *get_side(t_ray *ray, t_all *all)
 	return (t);
 }
 
+void	sort_sp(t_spr *x, int first, int last)
+{
+	t_spr	tmp;
+	int		pivot;
+	int 	i;
+	int		j;
+
+	if (first < last)
+	{
+		pivot = first;
+		i = first;
+		j = last;
+		while (i < j)
+		{
+			while (x[i].dist <= x[pivot].dist && i < last)
+				i++;
+			while (x[j].dist > x[pivot].dist)
+				j--;
+			if (i < j)
+			{
+				tmp = x[i];
+				x[i] = x[j];
+				x[j] = tmp;
+			}
+		}
+		tmp = x[pivot];
+		x[pivot] = x[j];
+		x[j] = tmp;
+		sort_sp(x, first, j - 1);
+		sort_sp(x, j + 1, last);
+	}
+}
+
+// void	sort_sp(t_spr *a, int n)
+// {
+// 	int i;
+// 	int j;
+// 	t_spr tmp;
+
+// 	i = 0;
+// 	while(i < (n - 1))
+// 	{
+// 		j = 0;
+// 		while (j < n - i - 1)
+// 		{
+// 			if (a[j].dist < a[j + 1].dist)
+// 			{
+// 				tmp = a[j];
+// 				a[j] = a[j + 1];
+// 				a[j + 1] = tmp;
+// 			}
+// 			j++;
+// 		}
+// 		i++;
+// 	}
+// }
+
+void	is_visible(t_all *all)
+{
+	int j;
+	int i;
+
+	i = 0;
+	j = 0;
+	while (i < all->sp_num)
+	{
+		if (all->spr[i].dist < VIEW_DIST)
+		{
+			all->spr_vis[j] = all->spr[i];
+			j++;
+		}
+		i++;
+	}
+	all->sp_num_v = j;
+}
+
+void	draw_sprites(t_all *all)
+{
+	int i;
+	int j;
+	int stripe;
+	t_sp_cast sp;
+	int d;
+
+	i = 0;
+	while(i < all->sp_num)
+	{
+		all->spr[i].dist = pow(all->plr.x - all->spr[i].pos.x , 2) + pow(all->plr.y - all->spr[i].pos.y, 2);
+		i++;
+	}
+	is_visible(all);
+	//i = 0;
+	i = all->sp_num_v;
+	sort_sp(all->spr_vis, 0, all->sp_num_v - 1);
+	//sort_sp(all->spr_vis, all->sp_num_v);
+	//while (i < all->sp_num_v)
+	while (i >= 0)
+	{
+			sp.spr_pl.x = all->spr_vis[i].pos.x - all->plr.x;
+			sp.spr_pl.y = all->spr_vis[i].pos.y - all->plr.y;
+			sp.inv_det = 1.0 / (all->plr.plane.x * all->plr.dir.y - all->plr.dir.x * all->plr.plane.y);
+			sp.transf.x = sp.inv_det * (all->plr.dir.y * sp.spr_pl.x - all->plr.dir.x * sp.spr_pl.y);
+			sp.transf.y = sp.inv_det * (-all->plr.plane.y * sp.spr_pl.x + all->plr.plane.x * sp.spr_pl.y);
+			sp.sp_screen_x = (int)((all->win.win_res.width / 2) * (1 + sp.transf.x / sp.transf.y));
+			sp.sp_h = abs((int)(all->win.win_res.height / sp.transf.y));
+			sp.draw_start_y = -sp.sp_h / 2 + all->win.win_res.height / 2;
+			if (sp.draw_start_y < 0)
+				sp.draw_start_y = 0;
+			sp.draw_end_y = sp.sp_h / 2 + all->win.win_res.height / 2;
+			if (sp.draw_end_y >= all->win.win_res.height)
+				sp.draw_end_y = all->win.win_res.height - 1;
+			sp.sp_w = abs((int)(all->win.win_res.height / sp.transf.y));
+			sp.draw_start_x = -sp.sp_w / 2 + sp.sp_screen_x;
+			if (sp.draw_start_x < 0)
+				sp.draw_start_x = 0;
+			sp.draw_end_x = sp.sp_w / 2 + sp.sp_screen_x;
+			if (sp.draw_end_x > all->win.win_res.width)
+				sp.draw_end_x = all->win.win_res.width - 1;
+			stripe = sp.draw_start_x;
+			while (stripe < sp.draw_end_x)
+			{
+				sp.tex.x = (int)((256 * (stripe - (-sp.sp_w / 2 + sp.sp_screen_x)) * all->textures.img_sp.w / sp.sp_w) / 256);
+				if (sp.transf.y > 0 && stripe > 0 && stripe < all->win.win_res.width && sp.transf.y < all->z_buf[stripe])
+				{
+					j = sp.draw_start_y;
+					while (j < sp.draw_end_y)
+					{
+						d = j * 256 - all->win.win_res.height * 128 + sp.sp_h * 128;
+						sp.tex.y = ((d * all->textures.img_sp.h) / sp.sp_h) / 256;
+						sp.color = get_color(&all->textures.img_sp, sp.tex.x, sp.tex.y);
+						if ((sp.color & 0x00FFFFFF) != 0)
+							my_pixel_put(all, stripe, j, sp.color);
+						j++;
+					}
+				}
+				stripe++;
+			}
+		//i++;
+		i--;
+	}
+}
+
 void	draw_walls(t_all *all)
 {
 	t_ray	ray;
@@ -259,7 +403,6 @@ void	draw_walls(t_all *all)
 		else
 			ray.wall_x = all->plr.x + ray.perp_wall_dist * ray.ray_dir.x;
 		t = get_side(&ray, all);
-		
 		ray.wall_x -= floor(ray.wall_x);
 		ray.tex_x = (int)(ray.wall_x * (double)t->w);
 		if (ray.side == 0 && ray.ray_dir.x > 0)
@@ -271,7 +414,6 @@ void	draw_walls(t_all *all)
 		
 		draw_floor(ray.x, ray.draw_end, all->c_floor, all);
 		draw_celling(ray.x, ray.draw_start, all->c_celling, all);
-		
 		while (ray.draw_start < ray.draw_end)
 		{
 			ray.tex_y = (int)ray.tex_pos & (t->h - 1);
@@ -280,7 +422,7 @@ void	draw_walls(t_all *all)
 			my_pixel_put(all, ray.x, ray.draw_start, ray.color);
 			ray.draw_start++;
 		}
-		//draw_ver_line(ray.x, ray.draw_start, ray.draw_end, ray.color, all);
+		all->z_buf[ray.x] = ray.perp_wall_dist;
 		ray.x++;
 	}
 }
@@ -305,10 +447,6 @@ void	key_w(t_all *all)
 
 void	key_a(t_all *all)
 {
-	// if (all->map[(int)(all->plr.y - all->plr.dir.x * MOVE_SPD)][(int)all->plr.x] != '1')
-	// 	all->plr.y -= all->plr.dir.x * MOVE_SPD;
-	// if (all->map[(int)(all->plr.y)][(int)(all->plr.x + all->plr.dir.y * MOVE_SPD)] != '1')
-	// 	all->plr.x += all->plr.dir.y * MOVE_SPD;
 	if (all->map[(int)(all->plr.y  - all->plr.plane.y * MOVE_SPD)][(int)all->plr.x] != '1')
 		all->plr.y -= all->plr.plane.y * MOVE_SPD;
 	if (all->map[(int)(all->plr.y)][(int)(all->plr.x - all->plr.plane.x * MOVE_SPD)] != '1')
@@ -325,10 +463,6 @@ void	key_s(t_all *all)
 
 void	key_d(t_all *all)
 {
-	// if (all->map[(int)(all->plr.y + all->plr.dir.x * MOVE_SPD)][(int)all->plr.x] != '1')
-	// 	all->plr.y += all->plr.dir.x * MOVE_SPD;
-	// if (all->map[(int)(all->plr.y)][(int)(all->plr.x - all->plr.dir.y * MOVE_SPD)] != '1')
-	// 	all->plr.x -= all->plr.dir.y * MOVE_SPD;
 	if (all->map[(int)(all->plr.y  + all->plr.plane.y * MOVE_SPD)][(int)all->plr.x] != '1')
 		all->plr.y += all->plr.plane.y * MOVE_SPD;
 	if (all->map[(int)(all->plr.y)][(int)(all->plr.x + all->plr.plane.x * MOVE_SPD)] != '1')
@@ -358,8 +492,54 @@ void	key_right(t_all *all)
 	all->plr.plane.x = tmp.x * cos(0.1) - tmp.y * sin(0.1);
 	all->plr.plane.y = tmp.x * sin(0.1) + tmp.y * cos(0.1);
 }
-int exit_m(int keycode)
+
+void	m_free(char **words)
 {
+	int i;
+
+	i = 0;
+	if (words != NULL)
+	{
+		while (words[i])
+		{
+			free(words[i]);
+			i++;
+		}
+		free(words);
+		words = NULL;
+	}
+}
+
+
+void	my_destroy_img(t_all *all, t_tex_img *t)
+{
+	if (all->win.mlx && t->img)
+		mlx_destroy_image(all->win.mlx, t->img);
+}
+
+void	free_all(t_all *all)
+{
+	if (all->spr)
+		free(all->spr);
+	if (all->spr_vis)
+		free(all->spr_vis);
+	if (all->map_lst != NULL)
+		ft_lstclear(&all->map_lst, free);
+	m_free(all->map);
+	if (all->z_buf != NULL)
+		free(all->z_buf);
+	if (all->win.mlx && all->win.win)
+		mlx_destroy_window(all->win.mlx, all->win.win);
+	my_destroy_img(all, &all->textures.img_n);
+	my_destroy_img(all, &all->textures.img_s);
+	my_destroy_img(all, &all->textures.img_e);
+	my_destroy_img(all, &all->textures.img_w);
+	my_destroy_img(all, &all->textures.img_sp);
+}
+
+int exit_m(t_all *all)
+{
+	free_all(all);
 	exit(0);
 }
 
@@ -395,7 +575,7 @@ int		press_key(int keycode, t_all *all)
 		all->keys.right_arrow = 1;
 	 //up - 126 down - 125 left - 123 right - 124
 	if (keycode == 53)
-		exit_m(keycode);
+		exit_m(all);
 	return (0);
 }
 
@@ -416,93 +596,99 @@ int		release_key(int keycode, t_all *all)
 	return (0);
 }
 
-// void	draw_floor(t_all *all)
-// {
-// 	t_caf_cast	floor;
-// 	int			x;
-// 	int			y;
-
-// 	x = 0;
-// 	y = 0;
-// 	while (y < all->win.win_res.height)
-// 	{
-// 		floor.ray_dir0.x = all->plr.dir.x - all->plr.plane.x;
-// 		floor.ray_dir0.y = all->plr.dir.y - all->plr.plane.y;
-// 		floor.ray_dir1.x = all->plr.dir.x + all->plr.plane.x;
-// 		floor.ray_dir1.y = all->plr.dir.y + all->plr.plane.y;
-// 		floor.p = y - all->win.win_res.height * 0.5;
-// 		floor. pos_z = all->win.win_res.height * 0.5;
-// 		floor.row_dist = floor.pos_z / floor.p;
-// 		floor.step.x = floor.row_dist * (floor.ray_dir1.x - floor.ray_dir0.x) / all->win.win_res.width;
-// 		floor.step.y = floor.row_dist * (floor.ray_dir1.y - floor.ray_dir0.y) / all->win.win_res.width;
-// 		floor.point.x = all->plr.x + floor.row_dist * floor.ray_dir0.x;
-// 		floor.point.y = all->plr.y + floor.row_dist * floor.ray_dir0.y;
-// 		while (x < all->win.win_res.width)
-// 		{
-// 			floor.point.x += floor.step.x;
-// 			my_pixel_put(all, x, y, all->c_floor);
-// 			my_pixel_put(all, x, all->win.win_res.height - y - 1, all->c_celling);
-// 			x++;
-// 		}
-// 		y++;
-// 		x = 0;
-// 	}
-// }
-
 int 	draw_screen(t_all *all)
 {
-	//int x;
-	//int y;
 	t_point point;
 
-	//y = 0;
-	mlx_clear_window(all->win.mlx, all->win.win);
 	check_key_flags(all);
 	all->win.img = mlx_new_image(all->win.mlx, all->win.win_res.width, all->win.win_res.height);
 	all->win.addr = mlx_get_data_addr(all->win.img, &all->win.bpp, &all->win.line_l, &all->win.en);
-	//draw_floor(all);
 	draw_walls(all);
+	draw_sprites(all);
 	mlx_put_image_to_window(all->win.mlx, all->win.win, all->win.img, 0, 0);
 	mlx_destroy_image(all->win.mlx, all->win.img);
 	return (0);
 }
 
-int main(int argc, char *argv[])
+void	draw_in_bmp(t_all *all)
+{
+	t_point point;
+
+	all->win.addr = mlx_get_data_addr(all->win.img, &all->win.bpp, &all->win.line_l, &all->win.en);
+	//init bmp;
+	draw_walls(all);
+	draw_sprites(all);
+	//put in bmp;
+	mlx_destroy_image(all->win.mlx, all->win.img);
+}
+
+void 	init_v(t_all *all)
+{
+	all->map = NULL;
+	all->line = NULL;
+	all->spr = NULL;
+	all->sp_num = 0;
+	all->spr = NULL;
+	all->spr_vis = NULL;
+	all->win.scr_res.width = 2560;
+	all->win.scr_res.height = 1440;
+	all->z_buf = NULL;
+	all->win.mlx = NULL;
+	all->win.win = NULL;
+	all->win.img = NULL;
+	all->textures.img_e.img = NULL;
+	all->textures.img_s.img = NULL;
+	all->textures.img_n.img = NULL;
+	all->textures.img_w.img = NULL;
+	all->textures.img_sp.img = NULL;
+	key_init(all);
+}
+
+void window_open(t_all *all)
+{
+	all->win.win = mlx_new_window(all->win.mlx, all->win.win_res.width, all->win.win_res.height, "cub3d");
+	init_textures(&all->textures, all->win.mlx, all);
+	mlx_hook(all->win.win, 2, 0, press_key, all);
+	mlx_hook(all->win.win, 3, 0, release_key, all);
+	mlx_hook(all->win.win, 17 , 0, exit_m, all);
+	mlx_loop_hook(all->win.mlx, draw_screen, all);
+	mlx_loop(all->win.mlx);
+}
+
+void	get_sqrns(t_all *all)
+{
+	init_textures(&all->textures, all->win.mlx, all);
+
+}
+
+void	loop_h(t_all *all)
+{
+	mlx_hook(all->win.win, 2, 0, &press_key, all);
+	mlx_hook(all->win.win, 3, 0, &release_key, all);
+	mlx_hook(all->win.win, 17, 0, exit_m, all);
+	mlx_loop_hook(all->win.mlx, draw_screen, all);
+	mlx_loop(all->win.mlx);
+}
+
+int 	main(int argc, char *argv[])
 {
 	t_all all;
 	int		fd;
-	char	*line;
-	t_list	*map;
-	char	**tmp;
-	int x = 0;
-	int y = 0;
-	int i;
-	int j;
-	line = NULL;
-	map = NULL;
-	t_point point;
-	
-	all.plr.dir1 = M_PI_2 * 3;
+
+	init_v(&all);
 	all.win.mlx = mlx_init();
 	//mlx_get_screen_size(all.win.mlx, &all.win.scr_res.width, &all.win.scr_res.height);
-	all.win.scr_res.width = 2560;
-	all.win.scr_res.height = 1440;
 	if (argc < 2 && argc > 3)
-		error("WRONG NUMBER OF ARGUMENTS!\n");
+		error("WRONG NUMBER OF ARGUMENTS!\n", &all);
 	if ((fd = open(argv[1], O_RDONLY)) < 0)
-		error("NO SUCH FILE OR DIRECTORY!\n");
-	if (parser(fd, line, &map, &all) < 0)
-		error("SOMTHING WRONG WITH .cub FILE!\n");
-	printf("%i, %i", all.win.win_res.width, all.win.win_res.height);
-	all.win.win = mlx_new_window(all.win.mlx, all.win.win_res.width, all.win.win_res.height, "cub3d");
-//rintf("%c\n", all.map[all.plr.y][all.plr.x]);
-	key_init(&all);
-	init_textures(&all.textures, all.win.mlx);
-	draw_screen(&all);
-	mlx_hook(all.win.win, 2, 0, &press_key, &all);
-	mlx_hook(all.win.win, 3, 0, &release_key, &all);
-	mlx_hook(all.win.win, 17 , 0, &exit_m, &all);
-	mlx_loop_hook(all.win.mlx, draw_screen, &all);
-	mlx_loop(all.win.mlx);
+		error("NO SUCH FILE OR DIRECTORY!\n", &all);
+	if (parser(fd, &all) < 0)
+		error("SOMTHING WRONG WITH .cub FILE!\n", &all);
+	if (!(all.z_buf = (double*)malloc(all.win.win_res.width * sizeof(double))))
+		error("MEMMORY ALLOCATE ERROR!\n", &all);
+	if(!(all.win.win = mlx_new_window(all.win.mlx, all.win.win_res.width, all.win.win_res.height, "cub3d")))
+		error("MEMMORY ALLOCATE ERROR!\n", &all);
+	init_textures(&all.textures, all.win.mlx, &all);
+	loop_h(&all);
 	
 }
