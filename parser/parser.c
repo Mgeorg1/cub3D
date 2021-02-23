@@ -13,68 +13,93 @@
 #include "../includes/cub3d.h"
 #define MIN_WIDTH 160
 #define MIN_HEIGHT 160
-
-int		matrix_len(char **m)
+static int	ft_isspace(const char *str)
 {
-	char **m1;
+	if (*str == ' ' || *str == '\t' || *str == '\r'
+			|| *str == '\n' || *str == '\v' || *str == '\f')
+		return (1);
+	return (0);
+}
 
-	m1 = m;
-	while(*m1)
-		m1++;
-	return (m1 - m);
+
+int			my_atoi(const char *str)
+{
+	long long	i;
+	long long	b;
+
+	b = 214748364;
+	i = 0;
+	while (ft_isspace(str) == 1)
+		str++;
+	if (ft_strncmp(str, "0", 2) == 0)
+		return (0);
+	while (*str >= '0' && *str <= '9')
+	{
+		if ((i > b) || (i == b && (*str - '0') >= 7))
+			return (2147483647);
+		i = i * 10 + *str - 48;
+		str++;
+	}
+	return (i);
+}
+
+void	check_res(t_all *all)
+{
+	if (all->win.scr_res.w < all->win.w_res.w && all->save_f == 0)
+		all->win.w_res.w = all->win.scr_res.w;
+	if (all->win.scr_res.h < all->win.w_res.h && all->save_f == 0)
+		all->win.w_res.h = all->win.scr_res.h;
+	if (all->win.scr_res.w < all->win.w_res.w && all->save_f == 1)
+		all->win.w_res.w = MAX_R_W;
+	if (all->win.scr_res.h < all->win.w_res.h && all->save_f == 1)
+		all->win.w_res.h = MAX_R_H;
+	if (all->win.w_res.h < MIN_HEIGHT
+	|| all->win.w_res.w < MIN_WIDTH)
+	{
+		all->win.w_res.w = MIN_WIDTH;
+		all->win.w_res.h = MIN_HEIGHT;
+	}
 }
 
 int		parse_res(char **words, t_all *all)
 {
-	
 	if (matrix_len(words) != 3)
 		error("WRONG RESOLUTION!\n", all);
 	if (ft_strncmp(words[0], "R", 2))
 		error("WRONG RESOLUTION!\n", all);
 	if (is_digit_str(words[1]) == -1 || is_digit_str(words[2]) == -1)
 		error("WRONG RESOLUTION!", all);
-	if ((all->win.win_res.width = ft_atoi(words[1])) < 0)
+	if ((all->win.w_res.w = my_atoi(words[1])) < 0)
 		error("WRONG RESOLUTION!\n", all);
-	if (all->win.scr_res.width < all->win.win_res.width)
-		all->win.win_res.width = all->win.scr_res.width;
-	if ((all->win.win_res.height = ft_atoi(words[2])) < 0)
+	if ((all->win.w_res.h = my_atoi(words[2])) < 0)
 		error("WRONG RESOLUTION!\n", all);
-	if (all->win.scr_res.height < all->win.win_res.height)
-		all->win.win_res.height = all->win.scr_res.height;
-	if (all->win.win_res.height < MIN_HEIGHT
-	|| all->win.win_res.width < MIN_WIDTH)
-	{
-		all->win.win_res.width = MIN_WIDTH;
-		all->win.win_res.height = MIN_HEIGHT;
-	}
+	check_res(all);
 	return (0);
 }
 
 int		parse_textures(char **words, t_all *all)
 {
-
 	if (matrix_len(words) != 2)
 		error("WRONG TEXTURE PATH!\n", all);
-	if ((ft_strncmp(*words, "SO", 3) == 0) && (all->textures.fd_s == NULL)
+	if ((ft_strncmp(*words, "SO", 3) == 0) && (all->tex.fd_s == NULL)
 	&& (open(words[1], O_RDONLY)) > 0)
-		all->textures.fd_s = ft_strdup(words[1]);
-	else if ((ft_strncmp(*words, "S", 2) == 0) && (all->textures.fd_sprite == NULL)
+		all->tex.fd_s = ft_strdup(words[1]);
+	else if ((ft_strncmp(*words, "S", 2) == 0) && (all->tex.fd_sprite == NULL)
 	&& ((open(words[1], O_RDONLY)) > 0))
-		all->textures.fd_sprite = ft_strdup(words[1]);
-	else if ((ft_strncmp(*words, "NO", 2) == 0) && (all->textures.fd_n == NULL)
+		all->tex.fd_sprite = ft_strdup(words[1]);
+	else if ((ft_strncmp(*words, "NO", 2) == 0) && (all->tex.fd_n == NULL)
 	&& ((open(words[1], O_RDONLY)) > 0))
-		all->textures.fd_n = ft_strdup(words[1]);
-	else if ((ft_strncmp(*words, "WE", 2) == 0) && (all->textures.fd_w == NULL)
+		all->tex.fd_n = ft_strdup(words[1]);
+	else if ((ft_strncmp(*words, "WE", 2) == 0) && (all->tex.fd_w == NULL)
 	&& ((open(words[1], O_RDONLY)) > 0))
-		all->textures.fd_w = ft_strdup(words[1]);
-	else if ((ft_strncmp(*words, "EA", 2) == 0) && (all->textures.fd_e == NULL)
+		all->tex.fd_w = ft_strdup(words[1]);
+	else if ((ft_strncmp(*words, "EA", 2) == 0) && (all->tex.fd_e == NULL)
 	&& ((open(words[1], O_RDONLY)) > 0))
-		all->textures.fd_e = ft_strdup(words[1]);
+		all->tex.fd_e = ft_strdup(words[1]);
 	else
 		error("WRONG TEXTURE PATH!\n", all);
 	return (0);
 }
-
 
 int		parse_color(char **words, t_all *all)
 {
@@ -106,43 +131,22 @@ int		parse_color(char **words, t_all *all)
 
 void	parse_conf(char *line, t_list *map, t_all *all)
 {
-	char **words;
-	int ret;
+	char	**words;
+	int		ret;
 
 	if (!(words = ft_split(line, ' ')))
 		error("WRONG MEMMORY ALLOCATE!\n", all);
 	else if ('R' == **words)
 		ret = parse_res(words, all);
-	else if (('S' == **words) || ('N' == **words) || ('W' == **words) || ('E' == **words))
+	else if (('S' == **words) || ('N' == **words)
+	|| ('W' == **words) || ('E' == **words))
 		ret = parse_textures(words, all);
 	else if (('F' == **words) || ('C' == **words))
 		ret = parse_color(words, all);
 	words_free(words, 0);
 }
 
-void	init_flags(t_all *all)
-{
-	all->c_flag = 0;
-	all->f_flag = 0;
-	all->textures.fd_e = NULL;
-	all->textures.fd_s = NULL;
-	all->textures.fd_n = NULL;
-	all->textures.fd_w = NULL;
-	all->textures.fd_sprite = NULL;
-}
-
-int		is_onlyspaces(char *s)
-{
-	while (*s)
-	{
-		if (*s != ' ')
-			return (0);
-		s++;
-	}
-	return (1);
-}
-
-int		parser(int fd, t_all *all)
+void	parser(int fd, t_all *all)
 {
 	int	readed_b;
 	int i;
@@ -151,8 +155,6 @@ int		parser(int fd, t_all *all)
 	init_flags(all);
 	while ((readed_b = get_next_line(fd, &all->line)) > 0 && i < 8)
 	{
-		if (readed_b == -1)
-			error("SOMTHING BAD JUST HAPPENDS!\n", all);
 		if (all->line[0] != '\0' && !is_onlyspaces(all->line))
 		{
 			parse_conf(all->line, all->map_lst, all);
@@ -160,16 +162,14 @@ int		parser(int fd, t_all *all)
 		}
 		free(all->line);
 	}
-	if (check_flags(all) < 0)
-		error("WRONG NUMBER OF SPECIFICATORS!\n", all);
+	if (readed_b == -1)
+		error("SOMTHING BAD JUST HAPPENDS!\n", all);
+	check_flags(all);
 	ft_lstadd_back(&all->map_lst, ft_lstnew(all->line));
 	while ((readed_b = get_next_line(fd, &all->line)) > 0)
-	{
-		if (readed_b == -1)
-			error("SOMTHING WRONG WITH '.cub' FILE!\n", all);
 		ft_lstadd_back(&all->map_lst, ft_lstnew(all->line));
-	}
+	if (readed_b == -1)
+		error("SOMTHING WRONG WITH '.cub' FILE!\n", all);
 	ft_lstadd_back(&all->map_lst, ft_lstnew(all->line));
 	make_map(all);
-	return (0);
 }

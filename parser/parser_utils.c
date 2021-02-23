@@ -23,7 +23,7 @@ int		is_digit_str(char *word)
 			return (-1);
 		i++;
 	}
-	return	(0);
+	return (0);
 }
 
 int		rgb_to_int(t_rgb *rgb)
@@ -33,10 +33,10 @@ int		rgb_to_int(t_rgb *rgb)
 
 int		atorgb(char *s, t_rgb *color)
 {
-	int i;
-	char **s1;
+	int		i;
+	char	**s1;
 
-	if(!(s1 = ft_split(s, ',')))
+	if (!(s1 = ft_split(s, ',')))
 		return (-1);
 	if (matrix_len(s1) < 3)
 		return (words_free(s1, -1));
@@ -47,14 +47,14 @@ int		atorgb(char *s, t_rgb *color)
 			return (words_free(s1, -1));
 		i++;
 	}
-	color->r = ft_atoi(s1[0]);
-	if (color->r  < 0 && color->r > 255)
+	color->r = my_atoi(s1[0]);
+	if (color->r < 0 && color->r > 255)
 		return (words_free(s1, -1));
-	color->g = ft_atoi(s1[1]);
-	if (color->g  < 0 && color->g > 255)
-		return(words_free(s1, -1));
-	color->b = ft_atoi(s1[2]);
-	if (color->b  < 0 && color->b > 255)
+	color->g = my_atoi(s1[1]);
+	if (color->g < 0 && color->g > 255)
+		return (words_free(s1, -1));
+	color->b = my_atoi(s1[2]);
+	if (color->b < 0 && color->b > 255)
 		return (words_free(s1, -1));
 	return (words_free(s1, rgb_to_int(color)));
 }
@@ -74,13 +74,12 @@ int		words_free(char **words, int ret)
 	return (ret);
 }
 
-int		check_flags(t_all *all)
+void	check_flags(t_all *all)
 {
-	if (!(all->textures.fd_sprite
-	&& all->textures.fd_e
-	&& all->textures.fd_n
-	&& all->textures.fd_s && all->textures.fd_w
+	if (!(all->tex.fd_sprite
+	&& all->tex.fd_e
+	&& all->tex.fd_n
+	&& all->tex.fd_s && all->tex.fd_w
 	&& all->f_flag && all->c_flag))
-		return (-1);
-	return (0);
+		error("WRONG NUMBER OF SPECIFICATORS!\n", all);
 }
