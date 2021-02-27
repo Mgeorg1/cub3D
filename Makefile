@@ -1,4 +1,4 @@
-NAME = cub3d
+NAME = cub3D
 INCLUDES = includes/cub3d.h
 SRCS	=	events/keys.c \
 			events/move.c \
