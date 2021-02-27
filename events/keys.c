@@ -48,7 +48,6 @@ int		release_key(int keycode, t_all *all)
 	return (0);
 }
 
-
 void	check_key_flags(t_all *all)
 {
 	if (all->keys.w == 1)

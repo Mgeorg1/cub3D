@@ -17,5 +17,5 @@ void	error(char *s, t_all *all)
 	ft_putstr_fd("Error\n", 2);
 	ft_putstr_fd(s, 2);
 	free_all(all);
-	exit (EXIT_FAILURE);
+	exit(EXIT_FAILURE);
 }

@@ -16,7 +16,6 @@ int		draw_screen(t_all *all)
 {
 	void	*img;
 	void	*addr;
-	t_point	point;
 
 	check_key_flags(all);
 	img = mlx_new_image(all->win.mlx, all->win.w_res.w, all->win.w_res.h);

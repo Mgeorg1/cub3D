@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   make_bmp.c                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: aemustaf <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/02/26 00:49:18 by aemustaf          #+#    #+#             */
+/*   Updated: 2021/02/26 00:49:20 by aemustaf         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/cub3d.h"
 
 void	write_image(t_all *all, int fd)
@@ -10,20 +22,17 @@ void	write_image(t_all *all, int fd)
 		y--;
 		write(fd, all->win.line_l * y + all->win.addr, all->win.line_l);
 	}
-	close (fd);
+	close(fd);
 	free_all(all);
 	exit(EXIT_SUCCESS);
 }
 
-void	make_bmp(t_all *all)
+void	write_info(t_all *all, int fd)
 {
-	int fd;
 	unsigned int	n;
 	unsigned int	i;
 	short			b;
 
-	if ((fd = open("cub3d.bmp", O_CREAT | O_RDWR | O_TRUNC, 0666)) < 0)
-		error("FAIL WITH CREATING FILE!\n", all);
 	n = all->win.line_l * (all->win.w_res.h) + 54;
 	write(fd, "BM", 2);
 	write(fd, &n, 4);
@@ -45,5 +54,14 @@ void	make_bmp(t_all *all)
 	write(fd, &i, 4);
 	write(fd, &i, 4);
 	write(fd, &i, 4);
+}
+
+void	make_bmp(t_all *all)
+{
+	int				fd;
+
+	if ((fd = open("cub3d.bmp", O_CREAT | O_RDWR | O_TRUNC, 0666)) < 0)
+		error("FAIL WITH CREATING FILE!\n", all);
+	write_info(all, fd);
 	write_image(all, fd);
 }

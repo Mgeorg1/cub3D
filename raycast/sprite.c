@@ -14,7 +14,6 @@
 
 void	sort_sp(t_spr *x, int first, int last)
 {
-	t_spr	tmp;
 	int		pivot;
 	int		i;
 	int		j;

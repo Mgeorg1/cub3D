@@ -35,4 +35,3 @@ void	key_right(t_all *all)
 	all->plr.pln.x = tmp.x * cos(0.1) - tmp.y * sin(0.1);
 	all->plr.pln.y = tmp.x * sin(0.1) + tmp.y * cos(0.1);
 }
-

@@ -12,6 +12,27 @@
 
 #include "../includes/cub3d.h"
 
+void		window_open(t_all *all)
+{
+	all->win.win = mlx_new_window(all->win.mlx,
+	all->win.w_res.w, all->win.w_res.h, "cub3d");
+	init_textures(&all->tex, all->win.mlx, all);
+	mlx_hook(all->win.win, 2, 0, press_key, all);
+	mlx_hook(all->win.win, 3, 0, release_key, all);
+	mlx_hook(all->win.win, 17, 0, exit_m, all);
+	mlx_loop_hook(all->win.mlx, draw_screen, all);
+	mlx_loop(all->win.mlx);
+}
+
+void		loop_h(t_all *all)
+{
+	mlx_hook(all->win.win, 2, 0, &press_key, all);
+	mlx_hook(all->win.win, 3, 0, &release_key, all);
+	mlx_hook(all->win.win, 17, 0, exit_m, all);
+	mlx_loop_hook(all->win.mlx, draw_screen, all);
+	mlx_loop(all->win.mlx);
+}
+
 t_tex_img	*get_side(t_ray *ray, t_all *all)
 {
 	t_tex_img *t;

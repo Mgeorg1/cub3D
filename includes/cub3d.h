@@ -15,13 +15,13 @@
 # include "../libft/libft.h"
 # include "../get_next_line/get_next_line.h"
 # include "../minilibx_opengl_20191021/mlx.h"
-//# include "../minilibx_mms_20200219/mlx.h"
 # include <math.h>
-# define SCALE_M 5
 # define MOVE_SPD 0.07
-# define VIEW_DIST 4000.0
+# define VIEW_DIST 5000.0
 # define MAX_R_W 15000
 # define MAX_R_H 8438
+# define MIN_WIDTH 160
+# define MIN_HEIGHT 160
 
 typedef	struct	s_res
 {
@@ -38,15 +38,15 @@ typedef struct	s_tex_img
 	int			line;
 	int			h;
 	int			w;
-} 				t_tex_img;
+}				t_tex_img;
 
 typedef struct	s_textures
 {
-	char*		fd_n;
-	char*		fd_s;
-	char*		fd_w;
-	char*		fd_e;
-	char*		fd_sprite;
+	char		*fd_n;
+	char		*fd_s;
+	char		*fd_w;
+	char		*fd_e;
+	char		*fd_sprite;
 	t_tex_img	img_n;
 	t_tex_img	img_s;
 	t_tex_img	img_e;
@@ -67,12 +67,11 @@ typedef struct	s_win
 	int			line_l;
 }				t_win;
 
-typedef struct 	s_point
+typedef struct	s_point
 {
-	int		x;
-	int		y;
+	int			x;
+	int			y;
 }				t_point;
-
 
 typedef struct	s_rgb
 {
@@ -87,13 +86,12 @@ typedef struct	s_vec
 	double y;
 }				t_vec;
 
-
 typedef struct	s_plr
 {
 	double		x;
 	double		y;
-	t_vec 	dir;
-	t_vec	pln;
+	t_vec		dir;
+	t_vec		pln;
 }				t_plr;
 
 typedef struct	s_ray
@@ -117,7 +115,7 @@ typedef struct	s_ray
 	int			tex_x;
 	int			tex_y;
 	double		tex_pos;
-	double 		step_tx;
+	double		step_tx;
 }				t_ray;
 
 typedef struct	s_sp_cast
@@ -152,7 +150,7 @@ typedef struct	s_caf_cast
 typedef struct	s_key_flags
 {
 	int			w;
-	int 		a;
+	int			a;
 	int			s;
 	int			d;
 	int			left_arrow;
@@ -165,17 +163,16 @@ typedef	struct	s_spr
 	double		dist;
 }				t_spr;
 
-
 typedef struct	s_all
 {
 	char		*line;
 	t_list		*map_lst;
 	t_win		win;
 	t_plr		plr;
-	char 		**map;
+	char		**map;
 	int			map_len;
 	t_rgb		celling;
-	t_rgb 		floor;
+	t_rgb		floor;
 	int			c_celling;
 	int			c_floor;
 	int			c_flag;
@@ -191,20 +188,9 @@ typedef struct	s_all
 	int			save_f;
 }				t_all;
 
-// typedef struct	s_map_info
-// {
-// 	char    *line;
-// 	char	*previus_line;
-// 	char	*next_line;
-// 	int		prev_len;
-// 	int		next_len;
-// 	int		dir_flag;
-// }				t_map_info;
-
-
 void			error(char *s, t_all *all);
 void			check_flags(t_all *all);
-int 			words_free(char **words, int ret);
+int				words_free(char **words, int ret);
 int				is_digit_str(char *word);
 void			parser(int fd, t_all *all);
 int				make_map(t_all *all);
@@ -213,7 +199,7 @@ int				matrix_len(char **m);
 int				rgb_to_int(t_rgb *rgb);
 void			free_all(t_all *all);
 void			make_bmp(t_all *all);
-int 			draw_screen(t_all *all);
+int				draw_screen(t_all *all);
 void			draw_walls(t_all *all);
 void			my_pixel_put(t_all *all, int x, int y, int color);
 int				get_color(t_tex_img *img, int x, int y);
@@ -234,7 +220,7 @@ void			key_left(t_all *all);
 void			key_right(t_all *all);
 int				press_key(int keycode, t_all *all);
 int				release_key(int keycode, t_all *all);
-int 			exit_m(t_all *all);
+int				exit_m(t_all *all);
 void			draw_sprites(t_all *all);
 void			swap_sp(t_spr *x, int j, int i);
 int				matrix_len(char **m);
@@ -245,5 +231,14 @@ void			check_line(t_all *all, int f, t_list *l);
 int				check_lnvalid_ch(char *s, t_all *all);
 void			map_validator(t_all *all, int x, int y, int sp_count);
 int				my_atoi(const char *str);
-#endif
+void			check_res(t_all *all);
+int				parse_res(char **words, t_all *all);
+void			loop_h(t_all *all);
+void			window_open(t_all *all);
+void			init_v(t_all *all);
+int				exit_m(t_all *all);
+void			free_all(t_all *all);
+void			my_destroy_img(t_all *all, t_tex_img *t);
+void			m_free(char **words);
 
+#endif
