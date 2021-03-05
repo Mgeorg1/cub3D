@@ -51,7 +51,9 @@ int		main(int argc, char *argv[])
 	int		fd;
 
 	init_v(&all);
-	all.win.mlx = mlx_init();
+	if (!(all.win.mlx = mlx_init()))
+		error("WIN INIT FAILED!\n", &all);
+	mlx_get_screen_size(all.win.mlx, &all.win.scr_res.w, &all.win.scr_res.h);
 	if (argc < 2 || argc > 3)
 		error("WRONG NUMBER OF ARGUMENTS!\n", &all);
 	if ((fd = open(argv[1], O_RDONLY)) < 0 || is_cub_file(argv[1], &all))

@@ -69,8 +69,6 @@ void	init_v(t_all *all)
 	all->sp_num = 0;
 	all->spr = NULL;
 	all->spr_vis = NULL;
-	all->win.scr_res.w = 2560;
-	all->win.scr_res.h = 1440;
 	all->z_buf = NULL;
 	all->win.mlx = NULL;
 	all->win.win = NULL;

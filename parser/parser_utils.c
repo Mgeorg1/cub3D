@@ -48,13 +48,13 @@ int		atorgb(char *s, t_rgb *color)
 		i++;
 	}
 	color->r = my_atoi(s1[0]);
-	if (color->r < 0 && color->r > 255)
+	if (color->r < 0 || color->r > 255)
 		return (words_free(s1, -1));
 	color->g = my_atoi(s1[1]);
-	if (color->g < 0 && color->g > 255)
+	if (color->g < 0 || color->g > 255)
 		return (words_free(s1, -1));
 	color->b = my_atoi(s1[2]);
-	if (color->b < 0 && color->b > 255)
+	if (color->b < 0 || color->b > 255)
 		return (words_free(s1, -1));
 	return (words_free(s1, rgb_to_int(color)));
 }

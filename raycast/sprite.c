@@ -69,14 +69,14 @@ void	calc_spr(t_all *all, t_sp_cast *sp, int i)
 	(-all->plr.pln.y * sp->spr_pl.x + all->plr.pln.x * sp->spr_pl.y);
 	sp->sp_screen_x = (int)((all->win.w_res.w / 2) *
 	(1 + sp->transf.x / sp->transf.y));
-	sp->sp_h = abs((int)(all->win.w_res.h / sp->transf.y));
+	sp->sp_h = abs((int)(all->win.w_res.w * OPT_RATIO / sp->transf.y));
 	sp->draw_start_y = -sp->sp_h / 2 + all->win.w_res.h / 2;
 	if (sp->draw_start_y < 0)
 		sp->draw_start_y = 0;
 	sp->draw_end_y = sp->sp_h / 2 + all->win.w_res.h / 2;
 	if (sp->draw_end_y >= all->win.w_res.h)
 		sp->draw_end_y = all->win.w_res.h - 1;
-	sp->sp_w = abs((int)(all->win.w_res.h / sp->transf.y));
+	sp->sp_w = abs((int)(all->win.w_res.w * OPT_RATIO / sp->transf.y));
 	sp->draw_start_x = -sp->sp_w / 2 + sp->sp_screen_x;
 	if (sp->draw_start_x < 0)
 		sp->draw_start_x = 0;
@@ -129,7 +129,7 @@ void	draw_sprites(t_all *all)
 	is_visible(all);
 	i = all->sp_num_v;
 	sort_sp(all->spr_vis, 0, all->sp_num_v - 1);
-	while (i >= 0)
+	while (i >= 0 && all->sp_num > 0)
 	{
 		calc_spr(all, &sp, i);
 		draw_spr_stripe(all, &sp);

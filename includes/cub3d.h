@@ -19,9 +19,10 @@
 # define MOVE_SPD 0.07
 # define VIEW_DIST 5000.0
 # define MAX_R_W 15000
-# define MAX_R_H 8438
+# define MAX_R_H 15000
 # define MIN_WIDTH 160
 # define MIN_HEIGHT 160
+# define OPT_RATIO 0.75
 
 typedef	struct	s_res
 {

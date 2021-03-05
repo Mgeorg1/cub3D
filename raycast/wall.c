@@ -19,8 +19,14 @@ void		ray_init(t_all *all, t_ray *ray)
 	ray->ray_dir.y = all->plr.dir.y + all->plr.pln.y * ray->camera_x;
 	ray->map_p.y = (int)all->plr.y;
 	ray->map_p.x = (int)all->plr.x;
-	ray->delta_dist.x = fabs(1 / ray->ray_dir.x);
-	ray->delta_dist.y = fabs(1 / ray->ray_dir.y);
+	if (ray->ray_dir.x == 0 && ray->ray_dir.y == 0)
+		ray->delta_dist.x = 0;
+	else
+		ray->delta_dist.x = fabs(1 / ray->ray_dir.x);
+	if (ray->ray_dir.y == 0 && ray->ray_dir.x == 0)
+		ray->delta_dist.y = 0;
+	else
+		ray->delta_dist.y = fabs(1 / ray->ray_dir.y);
 	ray->hit = 0;
 }
 
@@ -78,7 +84,7 @@ void		dda(t_all *all, t_ray *ray)
 
 t_tex_img	*wall_calc(t_all *all, t_ray *r, t_tex_img *t)
 {
-	r->l_height = (int)(all->win.w_res.h / r->wall_d);
+	r->l_height = (int)((all->win.w_res.w * OPT_RATIO / r->wall_d));
 	r->draw_start = -1 * r->l_height / 2 + all->win.w_res.h / 2;
 	if (r->draw_start < 0)
 		r->draw_start = 0;
